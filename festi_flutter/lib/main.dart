@@ -7,6 +7,192 @@ import 'package:url_launcher/url_launcher.dart';
 const _bgColor = Color(0xFF000516);
 const _accentColor = Color(0xFFC3AFFF);
 const _baseRtdbUrl = 'https://festi-suggest-default-rtdb.firebaseio.com';
+const _weekDaysEs = <String>[
+  'lunes',
+  'martes',
+  'miércoles',
+  'jueves',
+  'viernes',
+  'sábado',
+  'domingo',
+];
+const _monthsEs = <String>[
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
+const _topFeedTabs = <FeedType>[
+  FeedType.losts,
+  FeedType.rentals,
+  FeedType.jobs,
+  FeedType.services,
+];
+const _allFeedTypes = <FeedType>[
+  FeedType.homes,
+  FeedType.losts,
+  FeedType.rentals,
+  FeedType.jobs,
+  FeedType.services,
+];
+const _classificationPriority = <FeedType>[
+  FeedType.losts,
+  FeedType.rentals,
+  FeedType.jobs,
+  FeedType.services,
+];
+const _classificationRules = <FeedType, Map<String, int>>{
+  FeedType.losts: {
+    'se me perdio': 6,
+    'se perdio': 6,
+    'perdi': 4,
+    'perdimos': 4,
+    'perdieron': 4,
+    'perdido': 3,
+    'perdida': 3,
+    'perdio': 3,
+    'extravie': 4,
+    'extravio': 4,
+    'extraviamos': 4,
+    'extraviado': 3,
+    'olvide': 3,
+    'olvido': 3,
+    'olvidamos': 3,
+    'deje botado': 4,
+    'deje tirado': 4,
+    'se me quedo': 4,
+    'encontre': 3,
+    'encontro': 3,
+    'encontraron': 3,
+    'encontrado': 3,
+    'se encontraron': 3,
+    'recompensa': 2,
+    'devolver': 2,
+    'devolucion': 2,
+  },
+  FeedType.rentals: {
+    'se arrienda': 6,
+    'arriendan': 5,
+    'arriendo': 5,
+    'arrienda': 5,
+    'arrendar': 4,
+    'arrendando': 4,
+    'habitacion': 4,
+    'habitaciones': 4,
+    'pieza': 3,
+    'cuarto': 3,
+    'apartamento': 5,
+    'apartaestudio': 5,
+    'aparta estudio': 5,
+    'apto': 3,
+    'roomie': 5,
+    'roommate': 5,
+    'roomate': 5,
+    'rumi': 5,
+    'compartir apartamento': 6,
+    'compartir casa': 5,
+  },
+  FeedType.jobs: {
+    'busco trabajo': 6,
+    'busco empleo': 6,
+    'vacante': 5,
+    'hoja de vida': 5,
+    'se requiere': 5,
+    'se necesita': 4,
+    'trabajar': 3,
+    'empleo': 3,
+    'mesera': 4,
+    'mesero': 4,
+    'cajera': 4,
+    'cajero': 4,
+    'cocinero': 4,
+    'cocinera': 4,
+    'auxiliar': 3,
+    'docente': 3,
+    'vendedor': 3,
+    'vendedora': 3,
+    'asesor': 3,
+    'asesora': 3,
+    'recepcionista': 3,
+    'ninera': 4,
+    'parrillero': 3,
+    'impulsadora': 3,
+    'entrenador': 3,
+    'fines de semana': 2,
+    'medio tiempo': 2,
+    'turno': 2,
+    'disponibilidad': 2,
+  },
+  FeedType.services: {
+    'se vende': 6,
+    'vendo': 5,
+    'vendiendo': 5,
+    'ofrezco': 4,
+    'domicilio': 4,
+    'domicilios': 4,
+    'clases': 4,
+    'tutoria': 4,
+    'tutorias': 4,
+    'asesoria': 3,
+    'asesorias': 3,
+    'licencia': 3,
+    'licencias': 3,
+    'microsoft office': 5,
+    'streaming': 3,
+    'reparo': 3,
+    'arreglo': 3,
+    'manicure': 3,
+    'maquillaje': 3,
+    'fotografia': 3,
+    'diseno': 3,
+    'crochet': 3,
+    'catalogo': 3,
+    'productos': 2,
+    'producto': 2,
+    'curso': 2,
+    'servicio tecnico': 4,
+    'citas pasaporte': 4,
+  },
+};
+
+String _normalizeText(String value) {
+  final plain = value
+      .toLowerCase()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u')
+      .replaceAll('ü', 'u');
+  return plain
+      .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
+
+int _scoreByRules(String normalizedText, Map<String, int> rules) {
+  var score = 0;
+  for (final entry in rules.entries) {
+    if (normalizedText.contains(entry.key)) {
+      score += entry.value;
+    }
+  }
+  return score;
+}
+
+String _formatDateEs(DateTime date) {
+  final weekDay = _weekDaysEs[date.weekday - 1];
+  final month = _monthsEs[date.month - 1];
+  return '$weekDay, ${date.day} de $month de ${date.year}';
+}
 
 void main() {
   runApp(const FestiApp());
@@ -62,7 +248,7 @@ class _RootScreenState extends State<RootScreen> {
         onTap: (next) => setState(() => _tab = next),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.storefront), label: 'Festi'),
-          BottomNavigationBarItem(icon: Icon(Icons.forum), label: 'Publicar'),
+          BottomNavigationBarItem(icon: Icon(Icons.forum), label: 'Chat'),
           BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Suscribirse'),
         ],
       ),
@@ -70,52 +256,102 @@ class _RootScreenState extends State<RootScreen> {
   }
 }
 
-enum FeedType { homes, jobs, services, losts }
+enum FeedType { homes, jobs, services, losts, rentals }
 
 extension FeedTypeValues on FeedType {
   String get node => switch (this) {
-        FeedType.homes => 'homes',
-        FeedType.jobs => 'jobs',
-        FeedType.services => 'services',
-        FeedType.losts => 'losts',
-      };
+    FeedType.homes => 'homes',
+    FeedType.jobs => 'jobs',
+    FeedType.services => 'services',
+    FeedType.losts => 'losts',
+    FeedType.rentals => 'rentals',
+  };
 
   String get title => switch (this) {
-        FeedType.homes => 'HOME',
-        FeedType.jobs => 'JOBS',
-        FeedType.services => 'TOOLS',
-        FeedType.losts => 'LOST',
-      };
+    FeedType.homes => 'HOME',
+    FeedType.jobs => 'TRABAJOS',
+    FeedType.services => 'SERVICIOS',
+    FeedType.losts => 'PERDIDOS',
+    FeedType.rentals => 'ARRIENDOS',
+  };
 
   String get badge => switch (this) {
-        FeedType.homes => 'Solicitudes',
-        FeedType.jobs => 'Empleos',
-        FeedType.services => 'Servicios',
-        FeedType.losts => 'Perdidos',
-      };
+    FeedType.homes => 'Solicitudes',
+    FeedType.jobs => 'Trabajos',
+    FeedType.services => 'Servicios',
+    FeedType.losts => 'Perdidos',
+    FeedType.rentals => 'Arriendos',
+  };
 }
 
 class ListingItem {
-  const ListingItem({required this.description, this.number = ''});
+  const ListingItem({
+    required this.description,
+    this.number = '',
+    this.date = '',
+    this.createdAt = '',
+  });
 
   final String description;
   final String number;
+  final String date;
+  final String createdAt;
+
+  String get displayDate {
+    final cleanDate = date.trim();
+    if (cleanDate.isNotEmpty) return cleanDate;
+
+    final parsedCreatedAt = DateTime.tryParse(createdAt);
+    if (parsedCreatedAt != null) {
+      return _formatDateEs(parsedCreatedAt.toLocal());
+    }
+    return 'Fecha no disponible';
+  }
 
   factory ListingItem.fromJson(Map<String, dynamic> json) {
     return ListingItem(
       description: (json['description'] ?? '').toString(),
       number: (json['number'] ?? '').toString(),
+      date: (json['date'] ?? '').toString(),
+      createdAt: (json['createdAt'] ?? '').toString(),
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'description': description,
-        'number': number,
-      };
+  Map<String, dynamic> toJson() {
+    final payload = <String, dynamic>{
+      'description': description,
+      'number': number,
+    };
+    if (date.trim().isNotEmpty) {
+      payload['date'] = date.trim();
+    }
+    if (createdAt.trim().isNotEmpty) {
+      payload['createdAt'] = createdAt.trim();
+    }
+    return payload;
+  }
 }
 
 class _RealtimeApi {
   Uri _uri(String node) => Uri.parse('$_baseRtdbUrl/$node.json');
+
+  String _dailyKey(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
+  Future<int> _readDailyCount(String dayKey) async {
+    final response = await http.get(_uri('viewsByDay/$dayKey'));
+    if (response.statusCode >= 400 || response.body == 'null') {
+      return 0;
+    }
+
+    final payload = jsonDecode(response.body);
+    if (payload is! Map) return 0;
+    return int.tryParse((payload['count'] ?? 0).toString()) ?? 0;
+  }
 
   Future<List<ListingItem>> getListings(FeedType type) async {
     final response = await http.get(_uri(type.node));
@@ -165,15 +401,27 @@ class _RealtimeApi {
     );
   }
 
-  Future<void> registerView() async {
-    final current = await getTextList('views');
-    final now = DateTime.now().toIso8601String();
-    final next = [...current.reversed, 'view-$now'];
+  Future<int> registerDailyView() async {
+    final now = DateTime.now();
+    final dayKey = _dailyKey(now);
+    final currentCount = await _readDailyCount(dayKey);
+    final nextCount = currentCount + 1;
+
     await http.put(
-      _uri('views'),
+      _uri('viewsByDay/$dayKey'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(next),
+      body: jsonEncode({
+        'date': dayKey,
+        'count': nextCount,
+        'updatedAt': now.toIso8601String(),
+      }),
     );
+    return nextCount;
+  }
+
+  Future<int> getTodayViewCount() async {
+    final dayKey = _dailyKey(DateTime.now());
+    return _readDailyCount(dayKey);
   }
 }
 
@@ -186,10 +434,15 @@ class MarketplaceScreen extends StatefulWidget {
 
 class _MarketplaceScreenState extends State<MarketplaceScreen> {
   final _api = _RealtimeApi();
-  FeedType _type = FeedType.homes;
+  FeedType? _selectedTopTab;
   List<ListingItem> _items = const [];
   bool _loading = true;
   bool _viewTracked = false;
+  int _todayViews = 0;
+
+  FeedType get _activeType => _selectedTopTab ?? FeedType.homes;
+  bool get _isAllSelected => _selectedTopTab == null;
+  String get _feedCounterLabel => _isAllSelected ? 'Todos' : _activeType.badge;
 
   @override
   void initState() {
@@ -197,16 +450,44 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     _load();
   }
 
+  FeedType _classifyFeed(String description) {
+    final normalized = _normalizeText(description);
+    var bestType = FeedType.homes;
+    var bestScore = 0;
+
+    for (final type in _classificationPriority) {
+      final rules = _classificationRules[type];
+      if (rules == null) continue;
+      final score = _scoreByRules(normalized, rules);
+      if (score > bestScore) {
+        bestScore = score;
+        bestType = type;
+      }
+    }
+
+    return bestScore == 0 ? FeedType.homes : bestType;
+  }
+
   Future<void> _load() async {
+    int? todayViewsAfterRegister;
     if (!_viewTracked) {
       _viewTracked = true;
-      await _api.registerView();
+      todayViewsAfterRegister = await _api.registerDailyView();
     }
     setState(() => _loading = true);
-    final data = await _api.getListings(_type);
+    final data = _isAllSelected
+        ? (await Future.wait(
+            _allFeedTypes.map(_api.getListings),
+          )).expand((group) => group).toList()
+        : await _api.getListings(_activeType);
+    final viewsFuture = todayViewsAfterRegister != null
+        ? Future<int>.value(todayViewsAfterRegister)
+        : _api.getTodayViewCount();
+    final todayViews = await viewsFuture;
     if (!mounted) return;
     setState(() {
       _items = data;
+      _todayViews = todayViews;
       _loading = false;
     });
   }
@@ -221,112 +502,306 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   Future<void> _showAddModal() async {
     var description = '';
     var number = '';
+    FeedType? selectedManualType;
 
-    final created = await showModalBottomSheet<bool>(
+    final savedOnType = await showModalBottomSheet<FeedType>(
       context: context,
       isScrollControlled: true,
       backgroundColor: _bgColor,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Agregar en ${_type.title}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              TextField(
-                onChanged: (value) => description = value,
-                decoration: const InputDecoration(
-                  labelText: 'Descripcion',
-                  border: OutlineInputBorder(),
-                ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
               ),
-              const SizedBox(height: 10),
-              TextField(
-                onChanged: (value) => number = value,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Numero de whatsapp',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () async {
-                    final cleanDescription = description.trim();
-                    if (cleanDescription.isEmpty) return;
-                    await _api.addListing(
-                      _type,
-                      ListingItem(
-                        description: cleanDescription,
-                        number: number.trim(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _isAllSelected
+                        ? 'Agregar en Todos'
+                        : 'Agregar en ${_activeType.badge}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (_isAllSelected) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Elige tipo (opcional). Si no eliges, se clasifica automatico.',
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                        textAlign: TextAlign.center,
                       ),
-                    );
-                    if (!context.mounted) return;
-                    Navigator.pop(context, true);
-                  },
-                  child: const Text('Guardar'),
-                ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: List.generate(_topFeedTabs.length, (index) {
+                        final type = _topFeedTabs[index];
+                        final isSelected = selectedManualType == type;
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              right: index == _topFeedTabs.length - 1 ? 0 : 6,
+                            ),
+                            child: OutlinedButton(
+                              onPressed: () {
+                                setModalState(() {
+                                  selectedManualType = isSelected ? null : type;
+                                });
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 10,
+                                ),
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? _accentColor
+                                      : Colors.white54,
+                                ),
+                                backgroundColor: isSelected
+                                    ? _accentColor
+                                    : Colors.transparent,
+                                foregroundColor: isSelected
+                                    ? _bgColor
+                                    : Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  type.badge,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  TextField(
+                    onChanged: (value) => description = value,
+                    decoration: const InputDecoration(
+                      labelText: 'Descripcion',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    onChanged: (value) => number = value,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Numero de whatsapp',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () async {
+                        final cleanDescription = description.trim();
+                        if (cleanDescription.isEmpty) return;
+                        final targetType = _isAllSelected
+                            ? (selectedManualType ??
+                                  _classifyFeed(cleanDescription))
+                            : _activeType;
+                        final now = DateTime.now();
+                        await _api.addListing(
+                          targetType,
+                          ListingItem(
+                            description: cleanDescription,
+                            number: number.trim(),
+                            date: _formatDateEs(now),
+                            createdAt: now.toIso8601String(),
+                          ),
+                        );
+                        if (!context.mounted) return;
+                        Navigator.pop(context, targetType);
+                      },
+                      child: const Text('Guardar'),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
 
-    if (created == true) {
+    if (savedOnType != null) {
+      final usedAutomaticClassification =
+          _isAllSelected && selectedManualType == null;
+      if (usedAutomaticClassification &&
+          savedOnType != FeedType.homes &&
+          mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Se clasifico automaticamente en ${savedOnType.badge}.',
+            ),
+          ),
+        );
+      }
       await _load();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth <= 600;
+    final isMedium = screenWidth > 600 && screenWidth <= 1264;
+    final horizontalPadding = isMobile
+        ? 16.0
+        : isMedium
+        ? 24.0
+        : 36.0;
+    final titleFontSize = isMobile
+        ? 36.0
+        : isMedium
+        ? 42.0
+        : 48.0;
+    final chipFontSize = isMobile
+        ? 12.0
+        : isMedium
+        ? 13.0
+        : 14.0;
+    final viewsFontSize = isMobile
+        ? 14.0
+        : isMedium
+        ? 15.0
+        : 16.0;
+    final viewsIconSize = isMobile
+        ? 18.0
+        : isMedium
+        ? 19.0
+        : 20.0;
+    final tabGap = isMobile
+        ? 6.0
+        : isMedium
+        ? 8.0
+        : 10.0;
+
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 16,
+          ),
           children: [
-            Text(
-              _type.title,
-              style: const TextStyle(
-                fontSize: 36,
-                letterSpacing: 8,
-                fontWeight: FontWeight.w500,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _activeType.title,
+                    style: TextStyle(
+                      fontSize: titleFontSize,
+                      letterSpacing: 8,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white38),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.remove_red_eye_outlined,
+                        size: viewsIconSize,
+                        color: Colors.white70,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _todayViews.toString(),
+                        style: TextStyle(
+                          fontSize: viewsFontSize,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: FeedType.values.map((type) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(type.badge),
-                      selected: _type == type,
-                      onSelected: (_) async {
-                        setState(() => _type = type);
+            Row(
+              children: List.generate(_topFeedTabs.length, (index) {
+                final type = _topFeedTabs[index];
+                final isSelected = _selectedTopTab == type;
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: index == _topFeedTabs.length - 1 ? 0 : tabGap,
+                    ),
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        setState(() {
+                          _selectedTopTab = isSelected ? null : type;
+                        });
                         await _load();
                       },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 10,
+                        ),
+                        side: BorderSide(
+                          color: isSelected ? _accentColor : Colors.white54,
+                        ),
+                        backgroundColor: isSelected
+                            ? _accentColor
+                            : Colors.transparent,
+                        foregroundColor: isSelected ? _bgColor : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          type.badge,
+                          style: TextStyle(
+                            fontSize: chipFontSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                );
+              }),
             ),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${_type.badge}: ${_items.length}'),
+                Text('$_feedCounterLabel: ${_items.length}'),
                 TextButton(
                   onPressed: _showAddModal,
                   child: const Text('Agregar'),
@@ -334,7 +809,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               ],
             ),
             if (_loading)
-              const Center(child: Padding(padding: EdgeInsets.all(30), child: CircularProgressIndicator()))
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(30),
+                  child: CircularProgressIndicator(),
+                ),
+              )
             else if (_items.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 40),
@@ -349,12 +829,32 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: ListTile(
-                    onTap: () => _openWhatsapp(item.number),
-                    title: Text(item.description),
-                    subtitle: item.number.trim().isEmpty
+                    onTap: item.number.trim().isEmpty
                         ? null
-                        : Text('Whatsapp: ${item.number}',
-                            style: const TextStyle(color: Color(0xFF25D366))),
+                        : () => _openWhatsapp(item.number),
+                    title: Text(
+                      item.displayDate,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+                        Text(item.description),
+                        if (item.number.trim().isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          const Divider(color: Colors.white24, height: 1),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Whatsapp: ${item.number}',
+                            style: const TextStyle(color: Color(0xFF25D366)),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 );
               }),
@@ -414,14 +914,20 @@ class _PublicationsScreenState extends State<PublicationsScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Inicio',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+          const Text(
+            'Inicio',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _controller,
             maxLines: 3,
             decoration: const InputDecoration(
-              hintText: 'Que quieres decir?',
+              hintText: 'Quieres decir algo en anonimo?',
               border: OutlineInputBorder(),
             ),
           ),
@@ -429,19 +935,26 @@ class _PublicationsScreenState extends State<PublicationsScreen> {
           FilledButton(onPressed: _publish, child: const Text('Publicar')),
           const Divider(height: 24),
           if (_loading)
-            const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
+            )
           else
-            ..._publications.map((text) => Card(
-                  color: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    side: const BorderSide(color: Colors.white54),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ListTile(
-                    title: const Text('anonimo'),
-                    subtitle: Text(text),
-                  ),
-                )),
+            ..._publications.map(
+              (text) => Card(
+                color: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(color: Colors.white54),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListTile(
+                  title: const Text('anonimo'),
+                  subtitle: Text(text),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -476,9 +989,9 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Correo enviado con exito')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Correo enviado con exito')));
   }
 
   @override
@@ -492,7 +1005,11 @@ class _SubscribeScreenState extends State<SubscribeScreen> {
             const SizedBox(height: 40),
             const Text(
               'FESTI',
-              style: TextStyle(fontSize: 46, letterSpacing: 10, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 46,
+                letterSpacing: 10,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
